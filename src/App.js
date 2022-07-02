@@ -4,6 +4,7 @@ import {
     MapContainer as LeafletMap,
     TileLayer,
     Marker,
+    useMap,
     Popup,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -11,6 +12,7 @@ import "leaflet/dist/leaflet.css";
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
 import styled from "styled-components";
+import { useEffect, useState } from "react";
 
 let DefaultIcon = L.icon({
     iconUrl: icon,
@@ -19,13 +21,99 @@ let DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
+const defaultInfo = {
+    ip: "8.8.8.8",
+    location: {
+        country: "US",
+        region: "California",
+        city: "Mountain View",
+        lat: 37.40599,
+        lng: -122.078514,
+        postalCode: "94043",
+        timezone: "-07:00",
+        geonameId: 5375481,
+    },
+    domains: [
+        "0d2.net",
+        "003725.com",
+        "0f6.b0094c.cn",
+        "007515.com",
+        "0guhi.jocose.cn",
+    ],
+    as: {
+        asn: 15169,
+        name: "Google LLC",
+        route: "8.8.8.0/24",
+        domain: "https://about.google/intl/en/",
+        type: "Content",
+    },
+    isp: "Google LLC",
+};
+
 function App() {
+    const [mapCenter, setMapCenter] = useState({
+        lat: 34.80746,
+        lng: -40.4796,
+    });
+    const [ip, setIp] = useState("");
+    const [insertIp, setInsertIp] = useState("");
+    const [info, setInfo] = useState(defaultInfo);
+
+    const APIKEY = "at_c0Do2ZwAlTmZriKxy1jhf3WK770yZ";
+
+    useEffect(() => {
+        const getData = async () => {
+            await fetch("https://geolocation-db.com/json/")
+                .then((response) => response.json())
+                .then((data) => setIp(data.IPv4));
+        };
+
+        getData();
+    }, []);
+
+    useEffect(() => {
+        const getIpData = async () => {
+            await fetch(
+                `
+                https://geo.ipify.org/api/v2/country,city?apiKey=${APIKEY}&ipAddress=${ip}`
+            )
+                .then((response) => response.json())
+                .then((data) => {
+                    setInfo(data);
+                    setMapCenter([data.location.lat, data.location.lng]);
+                });
+        };
+
+        getIpData();
+    }, [ip]);
+
+    function ChangeView({ center, zoom }) {
+        const map = useMap();
+        map.setView(center, zoom);
+        return null;
+    }
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        setIp(insertIp);
+    };
+
     return (
         <Container>
             <Header>
                 <Title>IP Address Tracker</Title>
-                <Form>
-                    <input type="text" placeholder="192.212.174.101" />
+                <Form onSubmit={handleSubmit}>
+                    <input
+                        type="text"
+                        placeholder={
+                            info != undefined ? info.ip : "192.212.174.101"
+                        }
+                        id="first_name"
+                        name="newIp"
+                        onChange={(event) => setInsertIp(event.target.value)}
+                        value={insertIp}
+                    />
                     <button type="submit">
                         <img src="images/icon-arrow.svg" />
                     </button>
@@ -33,42 +121,44 @@ function App() {
                 <Results>
                     <div>
                         <Subtitle>IP Address</Subtitle>
-                        <Info>192.212.174.101</Info>
+                        <Info>{info != undefined ? info.ip : null}</Info>
                     </div>
 
                     <div>
                         <Subtitle>LOCATION</Subtitle>
-                        <Info>Brooklyn, NY 10001</Info>
+                        <Info>
+                            {info != undefined ? info.location.city : null},
+                            {info != undefined ? info.location.country : null}
+                            {info != undefined
+                                ? info.location.postalCode
+                                : null}
+                        </Info>
                     </div>
 
                     <div>
                         <Subtitle>TIMEZONE</Subtitle>
-                        <Info>UTC-05:00</Info>
+                        <Info>
+                            UTC
+                            {info != undefined ? info.location.timezone : null}
+                        </Info>
                     </div>
 
                     <div>
                         <Subtitle>ISP</Subtitle>
-                        <Info>SpaceX Starlink</Info>
+                        <Info>{info != undefined ? info.isp : null}</Info>
                     </div>
                 </Results>
             </Header>
-            <div>
-                <LeafletMap
-                    center={[51.505, -0.09]}
-                    zoom={20}
-                    scrollWheelZoom={true}
-                >
+            <MapContainer>
+                <LeafletMap center={mapCenter} zoom="20" scrollWheelZoom={true}>
+                    <ChangeView center={mapCenter} zoom="20" />
                     <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     />
-                    <Marker position={[51.505, -0.09]}>
-                        <Popup>
-                            A pretty CSS3 popup. <br /> Easily customizable.
-                        </Popup>
-                    </Marker>
+                    <Marker position={mapCenter}></Marker>
                 </LeafletMap>
-            </div>
+            </MapContainer>
         </Container>
     );
 }
@@ -78,14 +168,14 @@ const Container = styled.div`
     min-height: 100vh;
     max-width: 100vw;
     max-height: 100vh;
+    background: url("images/pattern-bg.png") center center fixed;
+    background-size: cover;
 `;
 
 const Header = styled.header`
     position: relative;
     height: 33vh;
     padding: 5%;
-    background: url("images/pattern-bg.png") center center fixed;
-    background-size: cover;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -115,7 +205,7 @@ const Form = styled.form`
         border: none;
         border-top-left-radius: 15px;
         border-bottom-left-radius: 15px;
-        padding: 2rem;
+        padding-left: 2rem;
         font-weight: 700;
         color: var(--very-dark-grey);
     }
@@ -126,7 +216,7 @@ const Form = styled.form`
         border: none;
         border-top-right-radius: 15px;
         border-bottom-right-radius: 15px;
-        background-color: var(--very-dark-grey);
+        background-color: black;
     }
 `;
 
@@ -156,5 +246,7 @@ const Info = styled.h3`
     font-size: 1.3rem;
     color: var(--very-dark-grey);
 `;
+
+const MapContainer = styled.div``;
 
 export default App;
