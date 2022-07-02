@@ -15,7 +15,7 @@ import styled from "styled-components";
 import { useEffect, useState } from "react";
 
 let DefaultIcon = L.icon({
-    iconUrl: icon,
+    iconUrl: "images/icon-location.svg",
     shadowUrl: iconShadow,
 });
 
@@ -83,7 +83,6 @@ function App() {
                     setMapCenter([data.location.lat, data.location.lng]);
                 });
         };
-
         getIpData();
     }, [ip]);
 
@@ -119,12 +118,12 @@ function App() {
                     </button>
                 </Form>
                 <Results>
-                    <div>
+                    <ResultItem>
                         <Subtitle>IP Address</Subtitle>
                         <Info>{info != undefined ? info.ip : null}</Info>
-                    </div>
+                    </ResultItem>
 
-                    <div>
+                    <ResultItem>
                         <Subtitle>LOCATION</Subtitle>
                         <Info>
                             {info != undefined ? info.location.city : null},
@@ -133,24 +132,29 @@ function App() {
                                 ? info.location.postalCode
                                 : null}
                         </Info>
-                    </div>
+                    </ResultItem>
 
-                    <div>
+                    <ResultItem>
                         <Subtitle>TIMEZONE</Subtitle>
                         <Info>
                             UTC
                             {info != undefined ? info.location.timezone : null}
                         </Info>
-                    </div>
+                    </ResultItem>
 
-                    <div>
+                    <ResultItem>
                         <Subtitle>ISP</Subtitle>
                         <Info>{info != undefined ? info.isp : null}</Info>
-                    </div>
+                    </ResultItem>
                 </Results>
             </Header>
             <MapContainer>
-                <LeafletMap center={mapCenter} zoom="20" scrollWheelZoom={true}>
+                <LeafletMap
+                    center={mapCenter}
+                    zoom="20"
+                    scrollWheelZoom={true}
+                    zoomControl={false}
+                >
                     <ChangeView center={mapCenter} zoom="20" />
                     <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -175,7 +179,7 @@ const Container = styled.div`
 const Header = styled.header`
     position: relative;
     height: 33vh;
-    padding: 5%;
+    padding: 25px;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -188,11 +192,17 @@ const Title = styled.h1`
     font-size: 1.5rem;
     color: #fff;
     font-weight: 500;
+
+    @media (min-width: 768px) {
+        margin-bottom: 1rem;
+        font-size: 2rem;
+    }
 `;
 
 const Form = styled.form`
     width: 100%;
     height: 60px;
+    max-width: 500px;
     margin-top: 1rem;
     display: flex;
     justify-content: center;
@@ -218,6 +228,19 @@ const Form = styled.form`
         border-bottom-right-radius: 15px;
         background-color: black;
     }
+
+    @media (min-width: 768px) {
+        height: 70px;
+
+        input {
+            font-size: 1.5rem;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        height: 80px;
+        max-width: 800px;
+    }
 `;
 
 const Results = styled.div`
@@ -227,24 +250,51 @@ const Results = styled.div`
     top: 9rem;
     text-align: center;
     width: 90%;
+    max-width: 800px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 0;
+    padding: 2% 5%;
     gap: 1.5rem;
     z-index: 999;
+
+    @media (min-width: 768px) {
+        top: 13rem;
+        gap: 2rem;
+    }
+
+    @media (min-width: 1024px) {
+        top: 15rem;
+        max-width: 1300px;
+        flex-direction: row;
+        gap: 2rem;
+    }
+`;
+
+const ResultItem = styled.div`
+    @media (min-width: 1024px) {
+        max-width: 25%;
+    }
 `;
 
 const Subtitle = styled.h2`
     font-size: 0.8rem;
     text-transform: uppercase;
     color: var(--dark-grey);
+
+    @media (min-width: 768px) {
+        font-size: 1rem;
+    }
 `;
 
 const Info = styled.h3`
     font-size: 1.3rem;
     color: var(--very-dark-grey);
+
+    @media (min-width: 768px) {
+        font-size: 1.5rem;
+    }
 `;
 
 const MapContainer = styled.div``;
